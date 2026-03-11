@@ -37,19 +37,13 @@ no accounts, no analytics, no cloud sync. This is non-negotiable.
 ## Design & Component Ownership
 - The designer (who is also the product owner) owns:
   - All Figma designs
-  - The React Native component library (src/components/)
   - Design tokens (src/theme/tokens.ts)
   - Theme variants and visual QA
 - Claude Code owns:
   - Screen composition using the component library
+  - First draft of React components
   - Navigation, data layer, business logic, services
   - Wiring theme provider, database, notifications
-- **Claude Code must NEVER create new base UI components.** All screens
-  are composed from components in src/components/. If a screen needs
-  a component that doesn't exist, flag it — do not improvise a new one.
-- The designer builds components using StyleSheet.create() with simple,
-  well-documented TypeScript prop interfaces.
-- Components are imported from src/components/index.ts (barrel export).
 
 ## Data Models
 - SafetyPlan: root container, one per user

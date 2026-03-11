@@ -4,17 +4,17 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/types';
 import { withErrorBoundary } from '../../utils/errorBoundary';
 
-type Props = NativeStackScreenProps<OnboardingStackParamList, 'QuickSetup'>;
+type Props = NativeStackScreenProps<OnboardingStackParamList, 'Scan'>;
 
-function QuickSetupScreen(_props: Props) {
+function ScanScreen(_props: Props) {
   return (
     <View style={styles.container}>
-      <Text>QuickSetupScreen</Text>
+      <Text>ScanScreen</Text>
     </View>
   );
 }
 
-export default withErrorBoundary(QuickSetupScreen);
+export default withErrorBoundary(ScanScreen);
 
 const styles = StyleSheet.create({
   container: {

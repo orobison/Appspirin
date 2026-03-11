@@ -3,6 +3,7 @@
     "name": "Appspirin",
     "slug": "Appspirin",
     "version": "1.0.0",
+    "scheme": "appspirin",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

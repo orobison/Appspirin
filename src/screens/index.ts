@@ -1,5 +1,7 @@
 export { default as WelcomeScreen } from './onboarding/WelcomeScreen';
-export { default as QuickSetupScreen } from './onboarding/QuickSetupScreen';
+export { default as PathSelectionScreen } from './onboarding/PathSelectionScreen';
+export { default as ScanScreen } from './onboarding/ScanScreen';
+export { default as ReviewScreen } from './onboarding/ReviewScreen';
 export { default as WalkThroughScreen } from './onboarding/WalkThroughScreen';
 export { default as PlanHubScreen } from './plan/PlanHubScreen';
 export { default as CheckInScreen } from './checkin/CheckInScreen';

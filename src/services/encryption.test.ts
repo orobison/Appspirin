@@ -12,7 +12,7 @@ describe('getOrCreateEncryptionKey', () => {
 
   it('returns a 64-character hex string when no key exists', async () => {
     mockKeychain.getGenericPassword.mockResolvedValue(false);
-    mockKeychain.setGenericPassword.mockResolvedValue({ service: 'appspirin_db_key', storage: 'keychain' });
+    mockKeychain.setGenericPassword.mockResolvedValue({ service: 'appspirin_db_key', storage: 'keychain' as Keychain.STORAGE_TYPE });
 
     const key = await getOrCreateEncryptionKey();
 
@@ -26,7 +26,7 @@ describe('getOrCreateEncryptionKey', () => {
       username: 'appspirin',
       password: existingKey,
       service: 'appspirin_db_key',
-      storage: 'keychain',
+      storage: 'keychain' as Keychain.STORAGE_TYPE,
     });
 
     const key = await getOrCreateEncryptionKey();
