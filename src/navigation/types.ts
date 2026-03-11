@@ -6,6 +6,7 @@ export type RootStackParamList = {
 export type OnboardingStackParamList = {
   Welcome: undefined;
   PathSelection: undefined;
+  QuickSetup: undefined;
   Scan: undefined;
   Review: { ocrResult?: string };
   WalkThrough: undefined;

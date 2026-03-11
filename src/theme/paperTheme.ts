@@ -13,11 +13,11 @@ export function buildPaperTheme(appTheme: AppTheme): MD3Theme {
       onPrimary:             appTheme.colors.textInverse,
       primaryContainer:      appTheme.colors.primaryLight,
       onPrimaryContainer:    appTheme.colors.primaryDark,
-      // Secondary — mapped from neutral tokens (no dedicated secondary token)
-      secondary:             appTheme.colors.textSecondary,
+      // Secondary
+      secondary:             appTheme.colors.secondary,
       onSecondary:           appTheme.colors.textInverse,
-      secondaryContainer:    appTheme.colors.surfaceRaised,
-      onSecondaryContainer:  appTheme.colors.textPrimary,
+      secondaryContainer:    appTheme.colors.secondaryLight,
+      onSecondaryContainer:  appTheme.colors.secondaryDark,
       // Tertiary — mapped to success (most distinct third hue available)
       tertiary:              appTheme.colors.success,
       onTertiary:            appTheme.colors.textInverse,

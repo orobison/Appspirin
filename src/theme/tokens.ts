@@ -10,21 +10,33 @@ export const colors = {
   neutral400: '#9CA3AF',
   neutral500: '#6B7280',
   neutral600: '#4B5563',
-  neutral700: '#374151',
-  neutral800: '#1F2937',
-  neutral900: '#111827',
+  neutral700: '#364924',  // olive-tinted dark — dark mode raised surface / border
+  neutral800: '#2E3F1E',  // olive dark — dark mode surface
+  neutral900: '#283618',  // olive darkest — light mode text / dark mode background
 
-  // Primary scale — to be set by designer
-  primary50: '#EFF6FF',
-  primary100: '#DBEAFE',
-  primary200: '#BFDBFE',
-  primary300: '#93C5FD',
-  primary400: '#60A5FA',
-  primary500: '#3B82F6',
-  primary600: '#2563EB',
-  primary700: '#1D4ED8',
-  primary800: '#1E40AF',
-  primary900: '#1E3A8A',
+  // Primary scale — olive green
+  primary50:  '#f4f6e8',
+  primary100: '#e6ead0',
+  primary200: '#cbd5a1',
+  primary300: '#acbd70',
+  primary400: '#8da44b',
+  primary500: '#728840',
+  primary600: '#606c38',
+  primary700: '#4d5830',
+  primary800: '#3a4224',
+  primary900: '#283618',
+
+  // Secondary scale — warm amber
+  secondary50:  '#fdf3eb',
+  secondary100: '#fae3ce',
+  secondary200: '#f3c89a',
+  secondary300: '#ecb578',
+  secondary400: '#e8a96a',
+  secondary500: '#dda15e',
+  secondary600: '#c98640',
+  secondary700: '#a56b30',
+  secondary800: '#7a4d22',
+  secondary900: '#523314',
 
   // Semantic
   danger: '#EF4444',
@@ -36,8 +48,8 @@ export const colors = {
 
   // Surface / background
   surface: '#FFFFFF',
-  surfaceRaised: '#F9FAFB',
-  background: '#F3F4F6',
+  surfaceRaised: '#fdf7d6',
+  background: '#fefae0',
   overlay: 'rgba(0, 0, 0, 0.5)',
 } as const;
 
