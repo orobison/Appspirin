@@ -1,0 +1,168 @@
+diff --git a/node_modules/@nozbe/watermelondb/WatermelonDB.podspec b/node_modules/@nozbe/watermelondb/WatermelonDB.podspec
+index c9d8b09..3be43cf 100644
+--- a/node_modules/@nozbe/watermelondb/WatermelonDB.podspec
++++ b/node_modules/@nozbe/watermelondb/WatermelonDB.podspec
+@@ -32,7 +32,11 @@ Pod::Spec.new do |s|
+ 
+   s.dependency "React"
+ 
+-  s.libraries = 'sqlite3'
++  s.dependency "SQLCipher", "~> 4.5"
++  s.pod_target_xcconfig = {
++    'OTHER_CFLAGS' => '$(inherited) -DSQLITE_HAS_CODEC',
++    'HEADER_SEARCH_PATHS' => '$(inherited) ${PODS_ROOT}/SQLCipher'
++  }
+ 
+   # NOTE: This dependency doesn't seem to be needed anymore (tested on RN 0.66, 0.71), file an issue
+   # if this causes issues for you
+diff --git a/node_modules/@nozbe/watermelondb/adapters/sqlite/makeDispatcher/index.native.js b/node_modules/@nozbe/watermelondb/adapters/sqlite/makeDispatcher/index.native.js
+index 9f3bd8b..6ed5e6e 100644
+--- a/node_modules/@nozbe/watermelondb/adapters/sqlite/makeDispatcher/index.native.js
++++ b/node_modules/@nozbe/watermelondb/adapters/sqlite/makeDispatcher/index.native.js
+@@ -45,9 +45,10 @@ var SqliteJsiDispatcher = /*#__PURE__*/function () {
+   // debug hook for NT use
+ 
+   function SqliteJsiDispatcher(dbName, {
+-    usesExclusiveLocking: usesExclusiveLocking
++    usesExclusiveLocking: usesExclusiveLocking,
++    key: key
+   }) {
+-    this._db = global.nativeWatermelonCreateAdapter(dbName, usesExclusiveLocking);
++    this._db = global.nativeWatermelonCreateAdapter(dbName, usesExclusiveLocking, key || "");
+     this._unsafeErrorListener = function () {};
+   }
+   var _proto2 = SqliteJsiDispatcher.prototype;
+diff --git a/node_modules/@nozbe/watermelondb/adapters/sqlite/type.d.ts b/node_modules/@nozbe/watermelondb/adapters/sqlite/type.d.ts
+index 5d1a321..8371faa 100644
+--- a/node_modules/@nozbe/watermelondb/adapters/sqlite/type.d.ts
++++ b/node_modules/@nozbe/watermelondb/adapters/sqlite/type.d.ts
+@@ -19,6 +19,8 @@ export type SQLiteAdapterOptions = $Exact<{
+   migrations?: SchemaMigrations
+   // The new way to run the database in synchronous mode.
+   jsi?: boolean
++  // SQLCipher encryption key (hex string). If empty, database is unencrypted.
++  key?: string
+   migrationEvents?: MigrationEvents
+   // Called when database failed to set up (initialize) correctly. It's possible that
+   // it's some transient error that will be solved by a reload, but it's
+diff --git a/node_modules/@nozbe/watermelondb/native/android-jsi/src/main/cpp/CMakeLists.txt b/node_modules/@nozbe/watermelondb/native/android-jsi/src/main/cpp/CMakeLists.txt
+index 79d961e..84e8414 100755
+--- a/node_modules/@nozbe/watermelondb/native/android-jsi/src/main/cpp/CMakeLists.txt
++++ b/node_modules/@nozbe/watermelondb/native/android-jsi/src/main/cpp/CMakeLists.txt
+@@ -37,6 +37,7 @@ set(SQLITE_VERSION sqlite-amalgamation-3460000)
+ 
+ include_directories(
+         ../../../../shared
++        ${SQLCIPHER_INCLUDE_DIR}
+         ${NODE_MODULES_PATH_WM}/@nozbe/sqlite/${SQLITE_VERSION}/
+         ${NODE_MODULES_PATH_WM}/@nozbe/simdjson/src/
+         ${NODE_MODULES_PATH_RN}/react-native/React
+@@ -72,9 +73,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Os")
+ file(GLOB ANDROID_JSI_SRC_FILES ./*.cpp)
+ file(GLOB SHARED_SRC_FILES ../../../../shared/*.cpp)
+ 
++find_library(SQLCIPHER_LIBRARY sqlcipher)
++
+ add_library(watermelondb-jsi SHARED
+         # vendor files
+-        ${NODE_MODULES_PATH_WM}/@nozbe/sqlite/${SQLITE_VERSION}/sqlite3.c
++        # sqlite3.c replaced by SQLCipher (linked as shared library)
+         ${NODE_MODULES_PATH_WM}/@nozbe/simdjson/src/simdjson.cpp
+         # our sources
+         ${ANDROID_JSI_SRC_FILES}
+@@ -86,4 +89,5 @@ add_library(watermelondb-jsi SHARED
+ target_link_libraries(watermelondb-jsi
+                       # link with these libraries:
+                       android
+-                      log)
++                      log
++                      ${SQLCIPHER_LIBRARY})
+diff --git a/node_modules/@nozbe/watermelondb/native/shared/Database.cpp b/node_modules/@nozbe/watermelondb/native/shared/Database.cpp
+index 8a4e9b4..53d09eb 100644
+--- a/node_modules/@nozbe/watermelondb/native/shared/Database.cpp
++++ b/node_modules/@nozbe/watermelondb/native/shared/Database.cpp
+@@ -5,8 +5,8 @@ namespace watermelondb {
+ using platform::consoleError;
+ using platform::consoleLog;
+ 
+-Database::Database(jsi::Runtime *runtime, std::string path, bool usesExclusiveLocking) : runtime_(runtime), mutex_() {
+-    db_ = std::make_unique<SqliteDb>(path);
++Database::Database(jsi::Runtime *runtime, std::string path, bool usesExclusiveLocking, std::string key) : runtime_(runtime), mutex_() {
++    db_ = std::make_unique<SqliteDb>(path, key);
+ 
+     std::string initSql = "";
+ 
+diff --git a/node_modules/@nozbe/watermelondb/native/shared/Database.h b/node_modules/@nozbe/watermelondb/native/shared/Database.h
+index f0073c5..1a70b96 100644
+--- a/node_modules/@nozbe/watermelondb/native/shared/Database.h
++++ b/node_modules/@nozbe/watermelondb/native/shared/Database.h
+@@ -26,7 +26,7 @@ namespace watermelondb {
+ class Database : public jsi::HostObject {
+ public:
+     static void install(jsi::Runtime *runtime);
+-    Database(jsi::Runtime *runtime, std::string path, bool usesExclusiveLocking);
++    Database(jsi::Runtime *runtime, std::string path, bool usesExclusiveLocking, std::string key = "");
+     ~Database();
+     void destroy();
+ 
+diff --git a/node_modules/@nozbe/watermelondb/native/shared/DatabaseBridge.cpp b/node_modules/@nozbe/watermelondb/native/shared/DatabaseBridge.cpp
+index ef0f23b..104a5a8 100644
+--- a/node_modules/@nozbe/watermelondb/native/shared/DatabaseBridge.cpp
++++ b/node_modules/@nozbe/watermelondb/native/shared/DatabaseBridge.cpp
+@@ -10,13 +10,14 @@ using platform::consoleLog;
+ void Database::install(jsi::Runtime *runtime) {
+     jsi::Runtime &rt = *runtime;
+     auto globalObject = rt.global();
+-    createMethod(rt, globalObject, "nativeWatermelonCreateAdapter", 2, [runtime](jsi::Runtime &rt, const jsi::Value *args) {
++    createMethod(rt, globalObject, "nativeWatermelonCreateAdapter", 3, [runtime](jsi::Runtime &rt, const jsi::Value *args) {
+         std::string dbPath = args[0].getString(rt).utf8(rt);
+         bool usesExclusiveLocking = args[1].getBool();
++        std::string key = args[2].isString() ? args[2].getString(rt).utf8(rt) : "";
+ 
+         jsi::Object adapter(rt);
+ 
+-        std::shared_ptr<Database> database = std::make_shared<Database>(runtime, dbPath, usesExclusiveLocking);
++        std::shared_ptr<Database> database = std::make_shared<Database>(runtime, dbPath, usesExclusiveLocking, key);
+         adapter.setProperty(rt, "database", jsi::Object::createFromHostObject(rt, database));
+ 
+         // FIXME: Important hack!
+diff --git a/node_modules/@nozbe/watermelondb/native/shared/Sqlite.cpp b/node_modules/@nozbe/watermelondb/native/shared/Sqlite.cpp
+index e08153b..f9fe3bc 100644
+--- a/node_modules/@nozbe/watermelondb/native/shared/Sqlite.cpp
++++ b/node_modules/@nozbe/watermelondb/native/shared/Sqlite.cpp
+@@ -17,7 +17,7 @@ std::string resolveDatabasePath(std::string path) {
+     }
+ }
+ 
+-SqliteDb::SqliteDb(std::string path) {
++SqliteDb::SqliteDb(std::string path, std::string key) {
+     consoleLog("Will open database...");
+     platform::initializeSqlite();
+     #ifndef ANDROID
+@@ -38,6 +38,13 @@ SqliteDb::SqliteDb(std::string path) {
+     }
+     assert(sqlite != nullptr);
+ 
++    if (!key.empty()) {
++        int keyResult = sqlite3_key(sqlite, key.c_str(), (int)key.length());
++        if (keyResult != SQLITE_OK) {
++            throw new std::runtime_error("Failed to set SQLCipher encryption key");
++        }
++    }
++
+     consoleLog("Opened database at " + resolvedPath);
+ }
+ 
+diff --git a/node_modules/@nozbe/watermelondb/native/shared/Sqlite.h b/node_modules/@nozbe/watermelondb/native/shared/Sqlite.h
+index 4fe52f1..9934305 100644
+--- a/node_modules/@nozbe/watermelondb/native/shared/Sqlite.h
++++ b/node_modules/@nozbe/watermelondb/native/shared/Sqlite.h
+@@ -8,7 +8,7 @@ namespace watermelondb {
+ // Lightweight wrapper for handling sqlite3 lifetime
+ class SqliteDb {
+ public:
+-    SqliteDb(std::string path);
++    SqliteDb(std::string path, std::string key = "");
+     ~SqliteDb();
+     void destroy();
+ 
