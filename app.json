@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Appspirin"
+      "bundleIdentifier": "com.appspirin.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,10 +24,16 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Appspirin"
+      "package": "com.appspirin.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "66479d62-7123-417d-8b44-3a6057161134"
+      }
+    },
+    "owner": "onrobison"
   }
 }

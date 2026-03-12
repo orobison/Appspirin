@@ -1,0 +1,41 @@
+{
+  "cli": {
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "development" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "preview" },
+      "android": { "buildType": "apk" },
+      "ios": { "simulator": false }
+    },
+    "production": {
+      "distribution": "store",
+      "env": { "APP_VARIANT": "production" },
+      "android": { "buildType": "app-bundle" }
+    }
+  },
+  "submit": {
+    "preview": {
+      "android": { "track": "internal", "releaseStatus": "draft" },
+      "ios": {
+        "appleId": "PLACEHOLDER_your_apple_id@example.com",
+        "ascAppId": "PLACEHOLDER_app_store_connect_app_id",
+        "appleTeamId": "PLACEHOLDER_apple_team_id"
+      }
+    },
+    "production": {
+      "android": { "track": "production" },
+      "ios": {
+        "appleId": "PLACEHOLDER_your_apple_id@example.com",
+        "ascAppId": "PLACEHOLDER_app_store_connect_app_id",
+        "appleTeamId": "PLACEHOLDER_apple_team_id"
+      }
+    }
+  }
+}

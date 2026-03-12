@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useReducer } from 'react';
 import { useDatabase } from './useDatabase';
 import UserSettings from '../db/models/UserSettings';
 import { logger } from '../utils/logger';
@@ -6,10 +6,17 @@ import { logger } from '../utils/logger';
 /**
  * Reactive hook for the UserSettings singleton.
  * Subscribes to changes so components re-render when settings update.
+ *
+ * Uses useRef + forceUpdate instead of useState to avoid React's
+ * Object.is bail-out: WatermelonDB mutates Model instances in place,
+ * so the same reference is re-emitted after an update — useState would
+ * silently skip the re-render. The ref holds the latest value while the
+ * reducer counter guarantees a re-render on every emission.
  */
 export function useSettings(): UserSettings | null {
   const db = useDatabase();
-  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const settingsRef = useRef<UserSettings | null>(null);
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,7 +24,10 @@ export function useSettings(): UserSettings | null {
     async function load() {
       try {
         const s = await UserSettings.getOrCreate(db);
-        if (!cancelled) setSettings(s);
+        if (!cancelled) {
+          settingsRef.current = s;
+          forceUpdate();
+        }
       } catch (err) {
         logger.error('Failed to load user settings:', err);
       }
@@ -25,14 +35,14 @@ export function useSettings(): UserSettings | null {
 
     load();
 
-    // Subscribe to changes on the user_settings table
     const subscription = db
       .get<UserSettings>('user_settings')
       .query()
       .observe()
       .subscribe((rows) => {
-        if (!cancelled && rows.length > 0) {
-          setSettings(rows[0]);
+        if (!cancelled) {
+          settingsRef.current = rows.length > 0 ? rows[0] : null;
+          forceUpdate();
         }
       });
 
@@ -42,5 +52,5 @@ export function useSettings(): UserSettings | null {
     };
   }, [db]);
 
-  return settings;
+  return settingsRef.current;
 }
