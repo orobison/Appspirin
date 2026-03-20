@@ -15,6 +15,7 @@ import { OnboardingStackParamList } from '../../navigation/types';
 import { withErrorBoundary } from '../../utils/errorBoundary';
 import { useTheme } from '../../hooks/useTheme';
 import { useDatabase } from '../../hooks/useDatabase';
+import { logger } from '../../utils/logger';
 import {
   completeOnboarding,
   EMPTY_PLAN_DATA,
@@ -230,7 +231,8 @@ function QuickSetupScreen({ navigation }: Props) {
         professionalContacts,
         environmentSafety,
       });
-    } finally {
+    } catch (err) {
+      logger.error('Failed to complete onboarding:', err);
       setSaving(false);
     }
   }
