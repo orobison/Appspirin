@@ -6,6 +6,10 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { PlanStackParamList, DrawerParamList } from './types';
 import PlanHubScreen from '../screens/plan/PlanHubScreen';
 import CheckInScreen from '../screens/checkin/CheckInScreen';
+import EditWarningSignsScreen from '../screens/plan/EditWarningSignsScreen';
+import EditCopingStrategiesScreen from '../screens/plan/EditCopingStrategiesScreen';
+import EditPeopleScreen from '../screens/plan/EditPeopleScreen';
+import EditCrisisResourcesScreen from '../screens/plan/EditCrisisResourcesScreen';
 
 const Stack = createNativeStackNavigator<PlanStackParamList>();
 
@@ -32,6 +36,26 @@ export default function PlanStackNavigator() {
         options={{ title: 'My Safety Plan', headerLeft: () => <HamburgerButton /> }}
       />
       <Stack.Screen name="CheckIn" component={CheckInScreen} options={{ title: 'Check In' }} />
+      <Stack.Screen
+        name="EditWarningSigns"
+        component={EditWarningSignsScreen}
+        options={{ title: 'Warning Signs' }}
+      />
+      <Stack.Screen
+        name="EditCopingStrategies"
+        component={EditCopingStrategiesScreen}
+        options={{ title: 'Coping Strategies' }}
+      />
+      <Stack.Screen
+        name="EditPeople"
+        component={EditPeopleScreen}
+        options={{ title: 'People' }}
+      />
+      <Stack.Screen
+        name="EditCrisisResources"
+        component={EditCrisisResourcesScreen}
+        options={{ title: 'Crisis Resources' }}
+      />
     </Stack.Navigator>
   );
 }

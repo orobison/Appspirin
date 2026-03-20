@@ -28,11 +28,16 @@ function DevDrawerContent(props: DrawerContentComponentProps) {
     }
   }, [db]);
 
+  const handleStartCheckIn = useCallback(() => {
+    props.navigation.navigate('PlanStack', { screen: 'CheckIn' });
+  }, [props.navigation]);
+
   return (
     <DrawerContentScrollView {...props}>
       <DrawerItemList {...props} />
       <View style={styles.devSection}>
         <DrawerItem label="⚙ Reset Onboarding (dev)" onPress={handleReset} />
+        <DrawerItem label="▶ Start Check-In (dev)" onPress={handleStartCheckIn} />
       </View>
     </DrawerContentScrollView>
   );

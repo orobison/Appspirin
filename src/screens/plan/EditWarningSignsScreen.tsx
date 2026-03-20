@@ -1,0 +1,205 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { PlanStackParamList } from '@navigation/types';
+import { useDatabase } from '@hooks/useDatabase';
+import {
+  getOrCreatePlan,
+  fetchWarningSigns,
+  createWarningSign,
+  deleteWarningSign,
+} from '@services/planService';
+import { withErrorBoundary } from '@utils/errorBoundary';
+import { logger } from '@utils/logger';
+import { colors, spacing, radii, typography } from '@theme/tokens';
+import WarningSign from '@db/models/WarningSign';
+
+type Props = NativeStackScreenProps<PlanStackParamList, 'EditWarningSigns'>;
+
+function EditWarningSignsScreen(_props: Props) {
+  const db = useDatabase();
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [signs, setSigns] = useState<WarningSign[]>([]);
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const refresh = useCallback(async (id: string) => {
+    const result = await fetchWarningSigns(db, id);
+    setSigns(result);
+  }, [db]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const plan = await getOrCreatePlan(db);
+        setPlanId(plan.id);
+        await refresh(plan.id);
+      } catch (err) {
+        logger.error('EditWarningSignsScreen: failed to load', err);
+      }
+    }
+    load();
+  }, [db, refresh]);
+
+  const handleAdd = async () => {
+    if (!text.trim() || !planId || saving) return;
+    setSaving(true);
+    try {
+      await createWarningSign(db, planId, { text: text.trim(), displayOrder: signs.length });
+      setText('');
+      await refresh(planId);
+    } catch (err) {
+      logger.error('EditWarningSignsScreen: failed to add', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (record: WarningSign) => {
+    if (!planId) return;
+    try {
+      await deleteWarningSign(db, record);
+      await refresh(planId);
+    } catch (err) {
+      logger.error('EditWarningSignsScreen: failed to delete', err);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <FlatList
+        data={signs}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No warning signs yet. Add one below.</Text>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.row}>
+            <Text style={styles.rowText} numberOfLines={2}>{item.text}</Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDelete(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${item.text}`}
+            >
+              <Text style={styles.deleteText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        ListFooterComponent={
+          <View style={styles.addForm}>
+            <TextInput
+              style={styles.input}
+              value={text}
+              onChangeText={setText}
+              placeholder="Describe a warning sign…"
+              placeholderTextColor={colors.neutral400}
+              returnKeyType="done"
+              onSubmitEditing={handleAdd}
+              accessibilityLabel="New warning sign"
+            />
+            <TouchableOpacity
+              style={[styles.addButton, (!text.trim() || saving) && styles.addButtonDisabled]}
+              onPress={handleAdd}
+              disabled={!text.trim() || saving}
+              accessibilityRole="button"
+              accessibilityLabel="Add warning sign"
+            >
+              <Text style={styles.addButtonText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+        }
+      />
+    </KeyboardAvoidingView>
+  );
+}
+
+export default withErrorBoundary(EditWarningSignsScreen);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  listContent: {
+    padding: spacing.md,
+  },
+  separator: {
+    height: spacing.sm,
+  },
+  emptyText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.neutral400,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: spacing.xl,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    padding: spacing.md,
+  },
+  rowText: {
+    flex: 1,
+    fontSize: typography.fontSize.md,
+    color: colors.neutral900,
+    marginRight: spacing.sm,
+  },
+  deleteButton: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.danger,
+    fontWeight: '600',
+  },
+  addForm: {
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  input: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.neutral200,
+    padding: spacing.md,
+    fontSize: typography.fontSize.md,
+    color: colors.neutral900,
+    minHeight: 44,
+  },
+  addButton: {
+    backgroundColor: colors.primary600,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  addButtonDisabled: {
+    opacity: 0.5,
+  },
+  addButtonText: {
+    fontSize: typography.fontSize.md,
+    color: colors.neutral0,
+    fontWeight: '600',
+  },
+});

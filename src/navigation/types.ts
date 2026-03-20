@@ -1,3 +1,5 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 export type RootStackParamList = {
   Onboarding: undefined;
   App: undefined;
@@ -13,7 +15,7 @@ export type OnboardingStackParamList = {
 };
 
 export type DrawerParamList = {
-  PlanStack: undefined;
+  PlanStack: NavigatorScreenParams<PlanStackParamList> | undefined;
   CheckInHistory: undefined;
   CrisisLineSettings: undefined;
   AppAppearance: undefined;
@@ -23,4 +25,8 @@ export type DrawerParamList = {
 export type PlanStackParamList = {
   PlanHub: undefined;
   CheckIn: { checkInId?: string };
+  EditWarningSigns: undefined;
+  EditCopingStrategies: undefined;
+  EditPeople: undefined;
+  EditCrisisResources: undefined;
 };
